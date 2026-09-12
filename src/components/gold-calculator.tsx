@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   METALS,
   PRICE_MODES,
@@ -40,6 +41,17 @@ export function GoldCalculator() {
   const [feePercent, setFeePercent] = useState("0");
   const [makingFee, setMakingFee] = useState("0");
   const [importOpen, setImportOpen] = useState(false);
+  const [printedAt, setPrintedAt] = useState<string | null>(null);
+
+  // `beforeprint` covers the toolbar button and ⌘P alike. flushSync guarantees
+  // the stamp is in the DOM before the print dialog snapshots the page, and
+  // keeps `new Date()` out of render — a static prerender would otherwise bake
+  // in the build time and fail hydration.
+  useEffect(() => {
+    const stamp = () => flushSync(() => setPrintedAt(new Date().toISOString()));
+    window.addEventListener("beforeprint", stamp);
+    return () => window.removeEventListener("beforeprint", stamp);
+  }, []);
 
   const isoDates = useMemo(
     () => [...new Set(entries.map((entry) => entry.date).filter(Boolean))],
@@ -240,6 +252,7 @@ export function GoldCalculator() {
           metal={metal}
           mode={mode}
           updatedAt={updatedAt}
+          printedAt={printedAt}
         />
       </main>
 

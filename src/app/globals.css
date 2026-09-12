@@ -139,6 +139,30 @@
     font-size: 0.9375rem;
   }
 
+  /* The sticky header covers whatever the browser scrolls to — tapping a field
+     on mobile, tabbing through the form, following the skip link. Without a
+     scroll margin the target lands underneath it. The offset clears the header
+     plus the field's own label; the header is two rows below `sm`, one above. */
+  :root {
+    --header-offset: 10.5rem;
+  }
+
+  @media (min-width: 640px) {
+    :root {
+      --header-offset: 6.5rem;
+    }
+  }
+
+  :target,
+  #main,
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex] {
+    scroll-margin-top: var(--header-offset);
+  }
+
   /* One visible, high-contrast focus treatment for every interactive element. */
   :focus-visible {
     outline: 2px solid var(--focus);

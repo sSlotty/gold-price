@@ -21,12 +21,15 @@ export function PrintReport({
   metal,
   mode,
   updatedAt,
+  printedAt,
 }: {
   rows: Row[];
   totals: Totals;
   metal: Metal;
   mode: PriceMode;
   updatedAt: string | null;
+  /** Stamped when printing actually starts, never during render. */
+  printedAt: string | null;
 }) {
   const up = totals.profit >= 0;
 
@@ -65,7 +68,7 @@ export function PrintReport({
           </p>
         </div>
         <div style={{ textAlign: "right", fontSize: "8.5pt", color: "var(--fg-muted)" }}>
-          <p style={{ margin: 0 }}>ออกรายงาน {formatUpdatedAt(new Date().toISOString())}</p>
+          <p style={{ margin: 0 }}>ออกรายงาน {formatUpdatedAt(printedAt)}</p>
           <p style={{ margin: 0 }}>ราคาอัปเดต {formatUpdatedAt(updatedAt)}</p>
           <p style={{ margin: 0 }}>แหล่งข้อมูล: สมาคมค้าทองคำ</p>
         </div>
