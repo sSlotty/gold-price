@@ -1,3 +1,4 @@
+import { LogoMark } from "./logo";
 import {
   METALS,
   PRICE_MODES,
@@ -42,7 +43,20 @@ export function PrintReport({
         }}
       >
         <div>
-          <p style={{ margin: 0, color: "var(--gold)", fontWeight: 700 }}>✦ Aurum</p>
+          <p
+            style={{
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: "5pt",
+              color: "var(--gold)",
+              fontWeight: 700,
+              fontSize: "13pt",
+            }}
+          >
+            <LogoMark />
+            Aurum
+          </p>
           <h1 style={{ margin: "6pt 0 2pt", fontSize: "16pt" }}>
             รายงานสรุปการลงทุนทองคำ
           </h1>

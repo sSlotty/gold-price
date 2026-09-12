@@ -11,6 +11,7 @@ import {
 import type { PriceStatus } from "@/hooks/use-gold-prices";
 import { IconAlert, IconRefresh } from "./icons";
 import { Button, Skeleton } from "./ui";
+import { Logo } from "./logo";
 import { ThemeToggle } from "./theme-toggle";
 
 export function SiteHeader({
@@ -38,15 +39,7 @@ export function SiteHeader({
           ข้ามไปยังเนื้อหาหลัก
         </a>
 
-        <div className="flex items-center gap-2.5">
-          <span
-            aria-hidden="true"
-            className="grid h-9 w-9 place-items-center rounded-lg bg-gold-soft text-lg text-gold"
-          >
-            ✦
-          </span>
-          <span className="text-lg leading-tight font-semibold tracking-tight">Aurum</span>
-        </div>
+        <Logo />
 
         {/* Live ticker: the one number worth having on screen at all times. */}
         <div className="order-last flex w-full min-w-0 items-center gap-3 border-t border-line pt-3 sm:order-none sm:w-auto sm:flex-1 sm:border-0 sm:pt-0">

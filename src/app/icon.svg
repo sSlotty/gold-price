@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- The chip carries its own background, so one fixed pair reads on both
+       light and dark browser chrome. Gold on cream is 4.88:1. -->
+  <rect width="24" height="24" rx="5" fill="#fdf6e3"/>
+  <path d="M6.5 7.5h11l2 3.5h-15z" fill="#8a6612" opacity="0.45"/>
+  <path d="M4.5 11h15L21 17H3z" fill="#8a6612"/>
+</svg>
