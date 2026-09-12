@@ -10,11 +10,7 @@ import {
   type Entry,
 } from "@/lib/gold";
 
-const SEED: Entry[] = [
-  newEntry("2026-01-21", "91558.15"),
-  newEntry("2026-01-21", "7063.52"),
-  newEntry("2026-01-26", "74814.51"),
-];
+const SEED: Entry[] = [];
 
 const parse = (raw: string | null): Entry[] => {
   if (raw === null) return SEED;
