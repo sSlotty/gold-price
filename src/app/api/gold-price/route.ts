@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const SOURCE = "https://classic.goldtraders.or.th";
+
+/**
+ * One upstream request per distinct date plus one for the current price, against
+ * a slow origin. The platform default (10s) can be tight for a portfolio with
+ * many dates on a cold cache; `preferredRegion` is deprecated in Next 16, so the
+ * deploy region is set in `vercel.json` instead.
+ */
+export const maxDuration = 30;
 const parsePrice = (html: string) => {
   const text = html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ");
   const historicalMatch = text.match(/ทองคำแท่ง 96\.5%\s+n\/a\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})/);
