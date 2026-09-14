@@ -231,14 +231,21 @@ export const migrateEntries = (raw: unknown): Entry[] | null => {
   if (!Array.isArray(raw)) return null;
   const entries = raw.flatMap((item): Entry[] => {
     if (!item || typeof item !== "object") return [];
-    const { date, amount } = item as { date?: unknown; amount?: unknown };
+    const { id, date, amount } = item as {
+      id?: unknown;
+      date?: unknown;
+      amount?: unknown;
+    };
     const rawDate = typeof date === "string" ? date : "";
-    return [
-      newEntry(
-        isValidIsoDate(rawDate) ? rawDate : parseLooseDate(rawDate),
-        typeof amount === "string" ? amount : String(amount ?? ""),
-      ),
-    ];
+    const entry = newEntry(
+      isValidIsoDate(rawDate) ? rawDate : parseLooseDate(rawDate),
+      typeof amount === "string" ? amount : String(amount ?? ""),
+    );
+    // The id is the row's React key, and this runs on every read — including
+    // after every keystroke. Minting a fresh one would remount the row's
+    // inputs and drop focus mid-edit, so keep whatever was stored and only
+    // generate for legacy rows that never had one.
+    return [typeof id === "string" && id ? { ...entry, id } : entry];
   });
   return entries.length ? entries : null;
 };

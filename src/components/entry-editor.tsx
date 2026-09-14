@@ -22,14 +22,12 @@ function EntryRow({
   entry,
   row,
   index,
-  canRemove,
   onUpdate,
   onRemove,
 }: {
   entry: Entry;
   row: Row | undefined;
   index: number;
-  canRemove: boolean;
   onUpdate: (id: string, field: "date" | "amount", value: string) => void;
   onRemove: (id: string) => void;
 }) {
@@ -49,7 +47,6 @@ function EntryRow({
           variant="danger"
           size="sm"
           onClick={() => onRemove(entry.id)}
-          disabled={!canRemove}
           aria-label={`ลบรายการที่ ${index + 1}`}
         >
           <IconTrash />
@@ -161,7 +158,6 @@ export function EntryEditor({
             entry={entry}
             row={rows[index]}
             index={index}
-            canRemove={entries.length > 1}
             onUpdate={onUpdate}
             onRemove={onRemove}
           />
