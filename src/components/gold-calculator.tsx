@@ -3,12 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import {
-  METALS,
   PRICE_MODES,
   buildRows,
   buildTotals,
+  metalPrice,
   toCsv,
-  type Metal,
   type PriceMode,
 } from "@/lib/gold";
 import { useEntries } from "@/hooks/use-entries";
@@ -37,7 +36,6 @@ export function GoldCalculator() {
     dismissUndo,
   } = useEntries();
 
-  const [metal, setMetal] = useState<Metal>("bar");
   const [mode, setMode] = useState<PriceMode>("sell");
   const [feePercent, setFeePercent] = useState("0");
   const [makingFee, setMakingFee] = useState("0");
@@ -68,14 +66,13 @@ export function GoldCalculator() {
         current,
         historical,
         mode,
-        metal,
         feePercent: Number(feePercent) || 0,
         makingFee: Number(makingFee) || 0,
       }),
-    [entries, current, historical, mode, metal, feePercent, makingFee],
+    [entries, current, historical, mode, feePercent, makingFee],
   );
   const totals = useMemo(() => buildTotals(rows), [rows]);
-  const livePrice = current ? current[mode] * METALS[metal].factor : null;
+  const livePrice = metalPrice(current, "bar", mode);
 
   const exportCsv = () => {
     const blob = new Blob(["﻿" + toCsv(rows)], {
@@ -95,7 +92,6 @@ export function GoldCalculator() {
         price={livePrice}
         status={status}
         updatedAt={updatedAt}
-        metal={metal}
         mode={mode}
         onRefresh={refresh}
       />
@@ -147,18 +143,7 @@ export function GoldCalculator() {
             </div>
 
             <div className="space-y-5 px-5 py-5">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <SegmentedControl
-                  name="metal"
-                  label="ประเภททอง"
-                  value={metal}
-                  onChange={setMetal}
-                  options={(Object.keys(METALS) as Metal[]).map((value) => ({
-                    value,
-                    label: METALS[value].short,
-                    hint: METALS[value].purity,
-                  }))}
-                />
+              <div>
                 <SegmentedControl
                   name="mode"
                   label="อ้างอิงราคา"
@@ -169,8 +154,10 @@ export function GoldCalculator() {
                     label: PRICE_MODES[value].label,
                   }))}
                 />
+                <p className="mt-1.5 text-xs text-fg-subtle">
+                  {PRICE_MODES[mode].hint} · ประเภททองเลือกแยกได้ในแต่ละรายการ
+                </p>
               </div>
-              <p className="-mt-2 text-xs text-fg-subtle">{PRICE_MODES[mode].hint}</p>
 
               <EntryEditor
                 entries={entries}
@@ -230,7 +217,7 @@ export function GoldCalculator() {
           </Card>
 
           <div className="flex flex-col gap-4 lg:sticky lg:top-24">
-            <PortfolioSummary totals={totals} metal={metal} status={status} />
+            <PortfolioSummary totals={totals} status={status} />
 
             <Card className="px-5 py-4">
               <Eyebrow>รายงาน</Eyebrow>
@@ -259,7 +246,6 @@ export function GoldCalculator() {
         <PrintReport
           rows={rows}
           totals={totals}
-          metal={metal}
           mode={mode}
           updatedAt={updatedAt}
           printedAt={printedAt}
@@ -267,7 +253,7 @@ export function GoldCalculator() {
       </main>
 
       <footer className="screen-only border-t border-line px-4 py-6 text-center text-xs text-fg-subtle sm:px-6">
-        Aurum · ราคาทองอ้างอิงสมาคมค้าทองคำ · {METALS[metal].label} · มูลค่าแสดงเป็นเงินบาท
+        Aurum · ราคาทองอ้างอิงสมาคมค้าทองคำ · มูลค่าแสดงเป็นเงินบาท
       </footer>
 
       <ImportDialog

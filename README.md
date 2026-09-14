@@ -12,7 +12,7 @@ Everything runs client-side. Entries live in `localStorage` and never leave the 
 
 - **Work backwards from a purchase amount** — enter `฿91,558.15` on `21/01/2569`, get weight, current value and P&L
 - **Buddhist-era dates** — native date picker, capped at today, with the พ.ศ. equivalent shown inline
-- **Three metal types** — ทองแท่ง 96.5%, ทองรูปพรรณ 96.5%, ทองคำ 99.99% (purity-adjusted)
+- **Gold type per entry** — each purchase is ทองแท่ง 96.5%, ทองรูปพรรณ 96.5% or ทองคำ 99.99%, priced from its own published series, with a per-type holdings breakdown
 - **Fees** — an optional percentage of principal plus a flat ค่ากำเหน็จ per entry
 - **Export the report** — CSV (Excel-safe, BOM-prefixed) and a purpose-built A4 print/PDF report
 - **Bulk import** — paste `date : amount` lines, with a live preview of what parsed
@@ -54,7 +54,7 @@ src/
 └── components/                   presentational; state lives in gold-calculator
 ```
 
-**Prices** come from `classic.goldtraders.or.th`, which publishes HTML rather than an API, so `route.ts` strips tags and regexes the figures out. Historical dates are cached for 15 minutes and the current price for 5, via Next's `revalidate`. The route accepts `D/M/YYYY` in Gregorian years and converts to พ.ศ. for the upstream query.
+**Prices** come from `classic.goldtraders.or.th`, which publishes HTML rather than an API, so `route.ts` strips tags and regexes the figures out. Both the ทองคำแท่ง and ทองรูปพรรณ series are parsed, from two different page shapes — the daily archive is a four-column table, the home page an inline announcement. Historical dates are cached for 15 minutes and the current price for 5, via Next's `revalidate`. The route accepts `D/M/YYYY` in Gregorian years and converts to พ.ศ. for the upstream query.
 
 **Dates** are stored as ISO (`2026-01-21`) so the native picker owns the input, and converted to พ.ศ. only for display. Entries saved by earlier versions under the Buddhist-date format migrate automatically on read.
 
@@ -75,10 +75,10 @@ Type is set at 15px/1.65 — Thai script needs the leading for tone marks to sta
 
 ## Known limitations
 
-- **Today's rate is sell-only.** The upstream homepage parse returns `buy: 0` for the current price, so selecting **ราคารับซื้อ** (buy) values the whole portfolio at zero. Historical buy prices parse correctly — it is only today's figure that is missing. Fix belongs in `parsePrice` in `route.ts`.
+- **No published buy-back price for ทองรูปพรรณ today.** The home page lists only its ขายออก figure, so jewellery rows show ไม่พบราคา under **ราคารับซื้อ** rather than being valued from the bar price. Historical dates carry both sides.
+- **ทองคำ 99.99% is an estimate.** The association publishes no daily 99.99% baht price, so it is derived from the 96.5% bar price scaled by purity. The UI labels those rows ประมาณการ.
 - **The price source is scraped, not contracted.** Any markup change upstream breaks parsing; the UI degrades to an error state with a retry rather than showing stale numbers as current.
 - **Weekend and holiday dates** have no published price, so those entries show ไม่พบราคา and are excluded from totals.
-- **ทองรูปพรรณ uses the same 96.5% spot price as ทองแท่ง.** Real jewellery pricing carries a shop markup that this does not model — use the ค่ากำเหน็จ field to approximate it.
 - Figures are **estimates for reference only**, not financial advice.
 
 ## Built with

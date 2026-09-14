@@ -1,6 +1,8 @@
 "use client";
 
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
+
+import { IconChevronDown } from "./icons";
 
 /* Shared interaction primitives. Every variant keeps a 40px+ hit target and
    inherits the global focus-visible ring. */
@@ -104,6 +106,28 @@ export function Field({
 
 export const inputClass =
   "h-11 w-full rounded-lg border border-line-strong bg-surface px-3 text-fg placeholder:text-fg-subtle transition-colors hover:border-accent-ring focus:border-accent-ring focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-[invalid=true]:border-neg";
+
+/**
+ * Native select with a real chevron. CSS gradient arrows are fragile and do not
+ * follow the theme, so the icon is a positioned element instead.
+ */
+export function Select({
+  className = "",
+  children,
+  ...props
+}: SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <span className="relative block">
+      <select
+        className={`h-11 w-full cursor-pointer appearance-none rounded-lg border border-line-strong bg-surface ps-3 pe-9 text-fg transition-colors hover:border-accent-ring focus:border-accent-ring focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${className}`}
+        {...props}
+      >
+        {children}
+      </select>
+      <IconChevronDown className="pointer-events-none absolute inset-y-0 end-3 my-auto text-fg-subtle" />
+    </span>
+  );
+}
 
 /** Accessible segmented control: a real radiogroup with roving labels. */
 export function SegmentedControl<T extends string>({

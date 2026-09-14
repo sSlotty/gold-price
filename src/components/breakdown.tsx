@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  METALS,
+  isPriced,
   money,
   number,
   signedMoney,
@@ -13,7 +15,7 @@ import { IconTrendDown, IconTrendUp } from "./icons";
 import { Card, Eyebrow } from "./ui";
 
 function ProfitCell({ row }: { row: Row }) {
-  if (row.price === null) return <span className="text-fg-subtle">—</span>;
+  if (!isPriced(row)) return <span className="text-fg-subtle">—</span>;
   const up = row.profit >= 0;
   const Trend = up ? IconTrendUp : IconTrendDown;
   return (
@@ -29,6 +31,7 @@ function ProfitCell({ row }: { row: Row }) {
 
 const HEADERS = [
   "วันที่ซื้อ",
+  "ประเภท",
   "เงินต้น",
   "ราคาอ้างอิง",
   "น้ำหนัก",
@@ -67,7 +70,7 @@ export function Breakdown({ rows, totals }: { rows: Row[]; totals: Totals }) {
                   key={header}
                   scope="col"
                   className={`px-4 py-2.5 text-xs font-semibold text-fg-muted ${
-                    index === 0 ? "text-start" : "text-end"
+                    index <= 1 ? "text-start" : "text-end"
                   }`}
                 >
                   {header}
@@ -84,6 +87,12 @@ export function Breakdown({ rows, totals }: { rows: Row[]; totals: Totals }) {
                 >
                   {row.date ? toThaiDate(row.date) : "—"}
                 </th>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  {METALS[row.metal].short}
+                  <span className="ms-1 text-xs text-fg-subtle">
+                    {METALS[row.metal].purity}
+                  </span>
+                </td>
                 <td className="nums-tabular px-4 py-3 text-end whitespace-nowrap">
                   {money(row.amount)}
                 </td>
@@ -91,10 +100,10 @@ export function Breakdown({ rows, totals }: { rows: Row[]; totals: Totals }) {
                   {row.price ? money(row.price) : "ไม่พบราคา"}
                 </td>
                 <td className="nums-tabular px-4 py-3 text-end whitespace-nowrap text-fg-muted">
-                  {row.price ? number(row.weight) : "—"}
+                  {isPriced(row) ? number(row.weight) : "—"}
                 </td>
                 <td className="nums-tabular px-4 py-3 text-end font-medium whitespace-nowrap">
-                  {row.price ? money(row.net) : "—"}
+                  {isPriced(row) ? money(row.net) : "—"}
                 </td>
                 <td className="px-4 py-3 text-end whitespace-nowrap">
                   <ProfitCell row={row} />
@@ -107,6 +116,7 @@ export function Breakdown({ rows, totals }: { rows: Row[]; totals: Totals }) {
               <th scope="row" className="px-4 py-3 text-start">
                 รวม
               </th>
+              <td className="px-4 py-3" />
               <td className="nums-tabular px-4 py-3 text-end">
                 {money(totals.principal)}
               </td>
@@ -130,8 +140,13 @@ export function Breakdown({ rows, totals }: { rows: Row[]; totals: Totals }) {
         {rows.map((row) => (
           <li key={row.id} className="bg-surface px-4 py-3.5">
             <div className="flex items-baseline justify-between gap-3">
-              <span className="nums-tabular text-sm font-medium">
-                {row.date ? toThaiDate(row.date) : "ไม่ระบุวันที่"}
+              <span className="text-sm font-medium">
+                <span className="nums-tabular">
+                  {row.date ? toThaiDate(row.date) : "ไม่ระบุวันที่"}
+                </span>
+                <span className="ms-2 text-xs font-normal text-fg-subtle">
+                  {METALS[row.metal].short} {METALS[row.metal].purity}
+                </span>
               </span>
               <ProfitCell row={row} />
             </div>
@@ -143,23 +158,23 @@ export function Breakdown({ rows, totals }: { rows: Row[]; totals: Totals }) {
               <div className="flex justify-between gap-2">
                 <dt className="text-fg-subtle">มูลค่าวันนี้</dt>
                 <dd className="nums-tabular font-medium">
-                  {row.price ? money(row.net) : "—"}
+                  {isPriced(row) ? money(row.net) : "—"}
                 </dd>
               </div>
               <div className="flex justify-between gap-2">
                 <dt className="text-fg-subtle">น้ำหนัก</dt>
                 <dd className="nums-tabular text-fg-muted">
-                  {row.price ? `${number(row.weight)} บ.` : "—"}
+                  {isPriced(row) ? `${number(row.weight)} บ.` : "—"}
                 </dd>
               </div>
               <div className="flex justify-between gap-2">
                 <dt className="text-fg-subtle">ผลตอบแทน</dt>
                 <dd
                   className={`nums-tabular ${
-                    row.price ? (row.profit >= 0 ? "text-pos" : "text-neg") : "text-fg-muted"
+                    isPriced(row) ? (row.profit >= 0 ? "text-pos" : "text-neg") : "text-fg-muted"
                   }`}
                 >
-                  {row.price ? signedPercent(row.profitPercent) : "—"}
+                  {isPriced(row) ? signedPercent(row.profitPercent) : "—"}
                 </dd>
               </div>
             </dl>

@@ -6,7 +6,6 @@ import {
   number,
   signedMoney,
   signedPercent,
-  type Metal,
   type Totals,
 } from "@/lib/gold";
 import type { PriceStatus } from "@/hooks/use-gold-prices";
@@ -43,11 +42,9 @@ function StatTile({
 
 export function PortfolioSummary({
   totals,
-  metal,
   status,
 }: {
   totals: Totals;
-  metal: Metal;
   status: PriceStatus;
 }) {
   const loading = status === "loading";
@@ -60,7 +57,7 @@ export function PortfolioSummary({
       <div className="border-b border-line px-5 py-4">
         <Eyebrow>สรุปพอร์ต</Eyebrow>
         <p className="mt-1 text-sm text-fg-muted">
-          มูลค่าปัจจุบันของ {METALS[metal].label} ที่คุณถืออยู่ หลังหักค่าธรรมเนียม
+          มูลค่าปัจจุบันของทองที่คุณถืออยู่ หลังหักค่าธรรมเนียม
         </p>
       </div>
 
@@ -120,6 +117,47 @@ export function PortfolioSummary({
             loading={loading}
           />
         </dl>
+
+        {/* What is actually held, by type — the reason types are per-entry. */}
+        {!loading && totals.holdings.length > 0 ? (
+          <div className="mt-5 border-t border-line pt-4">
+            <p className="text-xs font-semibold tracking-[0.12em] text-fg-subtle uppercase">
+              แยกตามประเภททอง
+            </p>
+            <ul className="mt-2.5 flex list-none flex-col gap-2">
+              {totals.holdings.map((holding) => {
+                const rising = holding.profit >= 0;
+                return (
+                  <li
+                    key={holding.metal}
+                    className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1"
+                  >
+                    <span className="text-sm">
+                      {METALS[holding.metal].label}
+                      <span className="ms-1.5 text-xs text-fg-subtle">
+                        {holding.count} รายการ
+                        {METALS[holding.metal].estimated ? " · ประมาณการ" : ""}
+                      </span>
+                    </span>
+                    <span className="flex items-baseline gap-3">
+                      <span className="nums-tabular text-sm text-fg-muted">
+                        {number(holding.weight)} บาททอง
+                      </span>
+                      <span className="nums-tabular text-sm font-medium">
+                        {money(holding.value)}
+                      </span>
+                      <span
+                        className={`nums-tabular text-xs ${rising ? "text-pos" : "text-neg"}`}
+                      >
+                        {signedMoney(holding.profit)}
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : null}
 
         {status === "error" ? (
           <p className="mt-4 flex items-start gap-2 rounded-lg bg-neg-soft px-3 py-2.5 text-sm text-neg">

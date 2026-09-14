@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { toApiDate, type GoldPrice } from "@/lib/gold";
+import { toApiDate, type MetalPrices } from "@/lib/gold";
 
 export type PriceStatus = "loading" | "refreshing" | "ready" | "error";
 
 type Result = {
   /** The request this result answers, so staleness is derivable, not stateful. */
   request: string;
-  current: GoldPrice | null;
-  historical: Record<string, GoldPrice | null>;
+  current: MetalPrices | null;
+  historical: Record<string, MetalPrices | null>;
   updatedAt: string | null;
   error: boolean;
 };

@@ -1,15 +1,82 @@
-export type Entry = { id: string; date: string; amount: string };
-export type GoldPrice = { buy: number; sell: number };
-export type PriceMode = "sell" | "buy";
 export type Metal = "bar" | "jewelry" | "fine";
+export type Entry = { id: string; date: string; amount: string; metal: Metal };
+export type PriceMode = "sell" | "buy";
+
+/** A published buy/sell pair. Either side can be absent from the source. */
+export type GoldPrice = { buy: number | null; sell: number | null };
+
+/** The two price series the association actually publishes. */
+export type PriceSource = "bar" | "jewelry";
+export type MetalPrices = { bar: GoldPrice | null; jewelry: GoldPrice | null };
 
 export const METALS: Record<
   Metal,
-  { short: string; purity: string; label: string; factor: number }
+  {
+    short: string;
+    purity: string;
+    label: string;
+    /** Which published series this type is priced from. */
+    source: PriceSource;
+    factor: number;
+    /** True when the figure is derived rather than published as-is. */
+    estimated?: boolean;
+    hint: string;
+  }
 > = {
-  bar: { short: "ทองแท่ง", purity: "96.5%", label: "ทองคำแท่ง 96.5%", factor: 1 },
-  jewelry: { short: "รูปพรรณ", purity: "96.5%", label: "ทองรูปพรรณ 96.5%", factor: 1 },
-  fine: { short: "บริสุทธิ์", purity: "99.99%", label: "ทองคำ 99.99%", factor: 99.99 / 96.5 },
+  bar: {
+    short: "ทองแท่ง",
+    purity: "96.5%",
+    label: "ทองคำแท่ง 96.5%",
+    source: "bar",
+    factor: 1,
+    hint: "ราคาประกาศทองคำแท่ง",
+  },
+  jewelry: {
+    short: "รูปพรรณ",
+    purity: "96.5%",
+    label: "ทองรูปพรรณ 96.5%",
+    source: "jewelry",
+    factor: 1,
+    hint: "ราคาประกาศทองรูปพรรณ (รวมค่ากำเหน็จโดยประมาณ)",
+  },
+  fine: {
+    short: "บริสุทธิ์",
+    purity: "99.99%",
+    label: "ทองคำ 99.99%",
+    // The association publishes no daily 99.99% baht price, so this is the
+    // 96.5% bar price scaled by purity — an estimate, and labelled as one.
+    source: "bar",
+    factor: 99.99 / 96.5,
+    estimated: true,
+    hint: "ประมาณจากราคาทองแท่งตามสัดส่วนความบริสุทธิ์",
+  },
+};
+
+export const METAL_KEYS = Object.keys(METALS) as Metal[];
+
+/** Price per baht-weight for one metal, or null when the source lacks it. */
+export const metalPrice = (
+  prices: MetalPrices | null | undefined,
+  metal: Metal,
+  mode: PriceMode,
+): number | null => {
+  const spec = METALS[metal];
+  const base = prices?.[spec.source]?.[mode] ?? null;
+  return base === null ? null : base * spec.factor;
+};
+
+/** Reads a metal from text — its key, its short name, or its full label. */
+export const parseMetal = (value: string): Metal => {
+  const text = value.trim().toLowerCase();
+  if (!text) return "bar";
+  return (
+    METAL_KEYS.find(
+      (metal) =>
+        metal === text ||
+        METALS[metal].short.toLowerCase() === text ||
+        METALS[metal].label.toLowerCase() === text,
+    ) ?? "bar"
+  );
 };
 
 export const PRICE_MODES: Record<PriceMode, { label: string; hint: string }> = {
@@ -121,17 +188,25 @@ export const parseLooseDate = (value: string): string => {
  * is a thousands separator inside the amount, not a separator. Falling back to
  * whitespace keeps `21/01/2569 91558.15` working.
  */
-export const splitEntryLine = (line: string): [string, string] => {
+export const splitEntryLine = (line: string): string[] => {
   const text = line.trim();
-  const explicit = text.match(/^(.*?)\s*[:;\t,]\s*(.*)$/);
-  if (explicit) return [explicit[1], explicit[2]];
+  // Colon/semicolon/tab are unambiguous, so every one of them is a separator.
+  if (/[:;\t]/.test(text)) return text.split(/\s*[:;\t]\s*/);
+  // A comma is a separator only the first time — later ones are thousands
+  // separators inside the amount.
+  const comma = text.match(/^(.*?)\s*,\s*(.*)$/);
+  if (comma) return [comma[1], comma[2]];
   const spaced = text.match(/^(.*?)\s+(.*)$/);
-  return spaced ? [spaced[1], spaced[2]] : [text, ""];
+  return spaced ? [spaced[1], spaced[2]] : [text];
 };
 
-/** The canonical export line: `21/01/2569 : 91558.15`. */
+/** The canonical export line: `21/01/2569 : 91558.15 : ทองแท่ง`. */
 export const toEntryLine = (entry: Entry) =>
-  `${toThaiDate(entry.date)} : ${entry.amount.replaceAll(",", "").trim()}`;
+  [
+    toThaiDate(entry.date),
+    entry.amount.replaceAll(",", "").trim(),
+    METALS[entry.metal].short,
+  ].join(" : ");
 
 /** True when an entry carries enough to survive a round trip through text. */
 export const isExportable = (entry: Entry) =>
@@ -170,8 +245,10 @@ export type Row = Omit<Entry, "amount"> & {
   index: number;
   /** Purchase amount in THB, parsed from the raw input. */
   amount: number;
-  /** Reference price per baht-weight on the purchase date, or null if unknown. */
+  /** Reference price per baht-weight on the purchase date, for this metal. */
   price: number | null;
+  /** Today's price per baht-weight, for this metal. */
+  current: number | null;
   /** Weight purchased, in baht-gold (BG). */
   weight: number;
   /** Value of that weight at today's price, before fees. */
@@ -180,6 +257,18 @@ export type Row = Omit<Entry, "amount"> & {
   net: number;
   profit: number;
   profitPercent: number;
+};
+
+/** A row only counts toward totals when both ends of the comparison exist. */
+export const isPriced = (row: Row) => row.price !== null && row.current !== null;
+
+export type MetalHolding = {
+  metal: Metal;
+  count: number;
+  weight: number;
+  principal: number;
+  value: number;
+  profit: number;
 };
 
 export type Totals = {
@@ -191,38 +280,43 @@ export type Totals = {
   profitPercent: number;
   priced: number;
   unpriced: number;
+  /** Per-type breakdown, for the types actually held. */
+  holdings: MetalHolding[];
 };
 
 export const buildRows = (options: {
   entries: Entry[];
-  current: GoldPrice | null;
-  historical: Record<string, GoldPrice | null>;
+  current: MetalPrices | null;
+  historical: Record<string, MetalPrices | null>;
   mode: PriceMode;
-  metal: Metal;
   feePercent: number;
   makingFee: number;
 }): Row[] => {
-  const { entries, current, historical, mode, metal, feePercent, makingFee } = options;
-  const factor = METALS[metal].factor;
+  const { entries, current, historical, mode, feePercent, makingFee } = options;
   const today = todayIso();
-  const currentPrice = current ? current[mode] * factor : 0;
 
   return entries.map((entry, index) => {
     const amount = parseAmount(entry.amount);
     const source =
       entry.date === today && current ? current : historical[toApiDate(entry.date)];
-    const base = source?.[mode] ?? null;
-    const price = base ? base * factor : null;
+
+    // Both ends are looked up for this row's own metal, so a jewellery holding
+    // is valued against the jewellery series rather than the bar price.
+    const price = metalPrice(source, entry.metal, mode);
+    const currentPrice = metalPrice(current, entry.metal, mode);
+
     const weight = price ? amount / price : 0;
-    const value = weight * currentPrice;
+    const value = currentPrice ? weight * currentPrice : 0;
     const fee = (amount * feePercent) / 100 + makingFee;
     const net = value - fee;
-    const profit = price ? net - amount : 0;
+    const profit = price && currentPrice ? net - amount : 0;
+
     return {
       ...entry,
       index,
       amount,
       price,
+      current: currentPrice,
       weight,
       value,
       fee,
@@ -234,10 +328,25 @@ export const buildRows = (options: {
 };
 
 export const buildTotals = (rows: Row[]): Totals => {
-  const priced = rows.filter((row) => row.price !== null);
+  const priced = rows.filter(isPriced);
   const principal = priced.reduce((sum, row) => sum + row.amount, 0);
   const value = priced.reduce((sum, row) => sum + row.net, 0);
   const profit = value - principal;
+
+  const holdings = METAL_KEYS.flatMap((metal): MetalHolding[] => {
+    const owned = priced.filter((row) => row.metal === metal);
+    if (owned.length === 0) return [];
+    const held = {
+      metal,
+      count: owned.length,
+      weight: owned.reduce((sum, row) => sum + row.weight, 0),
+      principal: owned.reduce((sum, row) => sum + row.amount, 0),
+      value: owned.reduce((sum, row) => sum + row.net, 0),
+      profit: 0,
+    };
+    return [{ ...held, profit: held.value - held.principal }];
+  });
+
   return {
     principal,
     value,
@@ -247,13 +356,15 @@ export const buildTotals = (rows: Row[]): Totals => {
     profitPercent: principal ? (profit / principal) * 100 : 0,
     priced: priced.length,
     unpriced: rows.length - priced.length,
+    holdings,
   };
 };
 
-export const newEntry = (date = "", amount = ""): Entry => ({
+export const newEntry = (date = "", amount = "", metal: Metal = "bar"): Entry => ({
   id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
   date,
   amount,
+  metal,
 });
 
 /** Reads either the v2 (ISO) or the legacy Buddhist-date shape. */
@@ -261,15 +372,18 @@ export const migrateEntries = (raw: unknown): Entry[] | null => {
   if (!Array.isArray(raw)) return null;
   const entries = raw.flatMap((item): Entry[] => {
     if (!item || typeof item !== "object") return [];
-    const { id, date, amount } = item as {
+    const { id, date, amount, metal } = item as {
       id?: unknown;
       date?: unknown;
       amount?: unknown;
+      metal?: unknown;
     };
     const rawDate = typeof date === "string" ? date : "";
     const entry = newEntry(
       isValidIsoDate(rawDate) ? rawDate : parseLooseDate(rawDate),
       typeof amount === "string" ? amount : String(amount ?? ""),
+      // Entries saved before types were per-row are all bar gold.
+      typeof metal === "string" ? parseMetal(metal) : "bar",
     );
     // The id is the row's React key, and this runs on every read — including
     // after every keystroke. Minting a fresh one would remount the row's
@@ -283,6 +397,7 @@ export const migrateEntries = (raw: unknown): Entry[] | null => {
 export const toCsv = (rows: Row[]) => {
   const header = [
     "วันที่ซื้อ",
+    "ประเภททอง",
     "เงินต้น (บาท)",
     "ราคาอ้างอิง (บาท/บาททอง)",
     "น้ำหนัก (บาททอง)",
@@ -292,12 +407,13 @@ export const toCsv = (rows: Row[]) => {
   ];
   const body = rows.map((row) => [
     toThaiDate(row.date),
+    METALS[row.metal].label,
     row.amount.toFixed(2),
     row.price?.toFixed(2) ?? "",
-    row.price ? row.weight.toFixed(4) : "",
-    row.price ? row.net.toFixed(2) : "",
+    isPriced(row) ? row.weight.toFixed(4) : "",
+    isPriced(row) ? row.net.toFixed(2) : "",
     row.fee.toFixed(2),
-    row.price ? row.profit.toFixed(2) : "",
+    isPriced(row) ? row.profit.toFixed(2) : "",
   ]);
   return [header, ...body]
     .map((line) =>

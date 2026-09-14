@@ -2,9 +2,11 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import {
+  METALS,
   newEntry,
   parseAmount,
   parseLooseDate,
+  parseMetal,
   splitEntryLine,
   toThaiDate,
   type Entry,
@@ -12,8 +14,8 @@ import {
 import { IconClose } from "./icons";
 import { Button, inputClass } from "./ui";
 
-const PLACEHOLDER = `21/01/2569 : 91,558.15
-21/01/2569 : 7,063.52
+const PLACEHOLDER = `21/01/2569 : 91,558.15 : ทองแท่ง
+21/01/2569 : 7,063.52 : รูปพรรณ
 26/01/2569 : 74,814.51`;
 
 type Parsed = { entries: Entry[]; skipped: number };
@@ -25,14 +27,15 @@ const parseText = (text: string): Parsed => {
     .map((line) => line.trim())
     .filter(Boolean)
     .flatMap((line): Entry[] => {
-      const [rawDate, rawAmount] = splitEntryLine(line);
-      const date = parseLooseDate(rawDate);
-      const amount = rawAmount.replaceAll(",", "").trim();
+      const [rawDate, rawAmount, rawMetal] = splitEntryLine(line);
+      const date = parseLooseDate(rawDate ?? "");
+      const amount = (rawAmount ?? "").replaceAll(",", "").trim();
       if (!date || parseAmount(amount) <= 0) {
         skipped += 1;
         return [];
       }
-      return [newEntry(date, amount)];
+      // A missing third field means an older export — those were all bar gold.
+      return [newEntry(date, amount, parseMetal(rawMetal ?? ""))];
     });
   return { entries, skipped };
 };
@@ -86,7 +89,8 @@ export function ImportDialog({
               นำเข้ารายการจากข้อความ
             </h2>
             <p className="mt-0.5 text-sm text-fg-muted">
-              วางทีละบรรทัด รูปแบบ <code>วันที่ : จำนวนเงิน</code> รองรับทั้ง พ.ศ. และ ค.ศ.
+              วางทีละบรรทัด รูปแบบ <code>วันที่ : จำนวนเงิน : ประเภททอง</code> รองรับทั้ง พ.ศ.
+            และ ค.ศ. หากไม่ระบุประเภทจะถือเป็นทองแท่ง
             </p>
           </div>
           <Button variant="ghost" size="icon" onClick={close} aria-label="ปิด">
@@ -118,7 +122,8 @@ export function ImportDialog({
                 ) : null}
                 {preview.entries[0] ? (
                   <span className="block text-xs text-fg-subtle">
-                    เริ่มที่ {toThaiDate(preview.entries[0].date)}
+                    เริ่มที่ {toThaiDate(preview.entries[0].date)} ·{" "}
+                    {METALS[preview.entries[0].metal].short}
                   </span>
                 ) : null}
               </>

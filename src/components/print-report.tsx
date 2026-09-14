@@ -2,13 +2,13 @@ import { LogoMark } from "./logo";
 import {
   METALS,
   PRICE_MODES,
+  isPriced,
   formatUpdatedAt,
   money,
   number,
   signedMoney,
   signedPercent,
   toThaiDate,
-  type Metal,
   type PriceMode,
   type Row,
   type Totals,
@@ -18,14 +18,12 @@ import {
 export function PrintReport({
   rows,
   totals,
-  metal,
   mode,
   updatedAt,
   printedAt,
 }: {
   rows: Row[];
   totals: Totals;
-  metal: Metal;
   mode: PriceMode;
   updatedAt: string | null;
   /** Stamped when printing actually starts, never during render. */
@@ -64,7 +62,8 @@ export function PrintReport({
             รายงานสรุปการลงทุนทองคำ
           </h1>
           <p style={{ margin: 0, color: "var(--fg-muted)", fontSize: "9pt" }}>
-            {METALS[metal].label} · {PRICE_MODES[mode].label}
+            {PRICE_MODES[mode].label} ·{" "}
+            {totals.holdings.map((h) => METALS[h.metal].short).join(" · ") || "—"}
           </p>
         </div>
         <div style={{ textAlign: "right", fontSize: "8.5pt", color: "var(--fg-muted)" }}>
@@ -120,7 +119,7 @@ export function PrintReport({
       <table className="print-table" style={{ fontSize: "8.5pt" }}>
         <thead>
           <tr style={{ background: "var(--surface-2, #f4f2ee)" }}>
-            {["วันที่ซื้อ", "เงินต้น", "ราคาอ้างอิง", "น้ำหนัก", "มูลค่าวันนี้", "กำไร/ขาดทุน"].map(
+            {["วันที่ซื้อ", "ประเภท", "เงินต้น", "ราคาอ้างอิง", "น้ำหนัก", "มูลค่าวันนี้", "กำไร/ขาดทุน"].map(
               (header, index) => (
                 <th
                   key={header}
@@ -128,7 +127,7 @@ export function PrintReport({
                   style={{
                     padding: "5pt 6pt",
                     borderBottom: "0.75pt solid var(--border)",
-                    textAlign: index === 0 ? "left" : "right",
+                    textAlign: index <= 1 ? "left" : "right",
                     fontSize: "8pt",
                   }}
                 >
@@ -142,10 +141,11 @@ export function PrintReport({
           {rows.map((row) => {
             const cells = [
               row.date ? toThaiDate(row.date) : "—",
+              `${METALS[row.metal].short} ${METALS[row.metal].purity}`,
               money(row.amount),
               row.price ? money(row.price) : "ไม่พบราคา",
-              row.price ? number(row.weight) : "—",
-              row.price ? money(row.net) : "—",
+              isPriced(row) ? number(row.weight) : "—",
+              isPriced(row) ? money(row.net) : "—",
             ];
             return (
               <tr key={row.id}>
@@ -155,7 +155,7 @@ export function PrintReport({
                     style={{
                       padding: "5pt 6pt",
                       borderBottom: "0.5pt solid var(--border)",
-                      textAlign: index === 0 ? "left" : "right",
+                      textAlign: index <= 1 ? "left" : "right",
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
@@ -168,14 +168,14 @@ export function PrintReport({
                     borderBottom: "0.5pt solid var(--border)",
                     textAlign: "right",
                     fontVariantNumeric: "tabular-nums",
-                    color: row.price
+                    color: isPriced(row)
                       ? row.profit >= 0
                         ? "var(--pos)"
                         : "var(--neg)"
                       : "var(--fg-muted)",
                   }}
                 >
-                  {row.price
+                  {isPriced(row)
                     ? `${row.profit >= 0 ? "กำไร " : "ขาดทุน "}${signedMoney(row.profit)}`
                     : "—"}
                 </td>

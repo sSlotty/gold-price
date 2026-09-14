@@ -2,6 +2,8 @@
 
 import { useId } from "react";
 import {
+  METALS,
+  METAL_KEYS,
   entryIssue,
   money,
   parseAmount,
@@ -11,7 +13,7 @@ import {
   type Row,
 } from "@/lib/gold";
 import { IconPlus, IconTrash } from "./icons";
-import { Button, inputClass } from "./ui";
+import { Button, Select, inputClass } from "./ui";
 
 const ISSUE_MESSAGE = {
   date: "เลือกวันที่ที่ไม่เกินวันนี้",
@@ -28,12 +30,13 @@ function EntryRow({
   entry: Entry;
   row: Row | undefined;
   index: number;
-  onUpdate: (id: string, field: "date" | "amount", value: string) => void;
+  onUpdate: (id: string, field: "date" | "amount" | "metal", value: string) => void;
   onRemove: (id: string) => void;
 }) {
   const uid = useId();
   const dateId = `${uid}-date`;
   const amountId = `${uid}-amount`;
+  const metalId = `${uid}-metal`;
   const issue = entryIssue(entry);
   const amount = parseAmount(entry.amount);
 
@@ -117,6 +120,27 @@ function EntryRow({
           </p>
         </div>
       </div>
+
+      <div className="mt-3 flex flex-col gap-1">
+        <label htmlFor={metalId} className="text-xs font-medium text-fg-muted">
+          ประเภททอง
+        </label>
+        <Select
+          id={metalId}
+          value={entry.metal}
+          onChange={(event) => onUpdate(entry.id, "metal", event.target.value)}
+          aria-describedby={`${metalId}-note`}
+        >
+          {METAL_KEYS.map((metal) => (
+            <option key={metal} value={metal}>
+              {METALS[metal].label}
+            </option>
+          ))}
+        </Select>
+        <p id={`${metalId}-note`} className="text-xs text-fg-subtle">
+          {METALS[entry.metal].hint}
+        </p>
+      </div>
     </li>
   );
 }
@@ -130,7 +154,7 @@ export function EntryEditor({
 }: {
   entries: Entry[];
   rows: Row[];
-  onUpdate: (id: string, field: "date" | "amount", value: string) => void;
+  onUpdate: (id: string, field: "date" | "amount" | "metal", value: string) => void;
   onRemove: (id: string) => void;
   onAdd: () => void;
 }) {

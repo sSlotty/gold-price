@@ -113,6 +113,8 @@ export const IconClose = svg(
   </>,
 );
 
+export const IconChevronDown = svg(<path d="m6 9 6 6 6-6" />);
+
 export const IconUndo = svg(
   <>
     <path d="M9 14 4 9l5-5" />

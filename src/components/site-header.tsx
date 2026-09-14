@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  METALS,
-  PRICE_MODES,
-  formatUpdatedAt,
-  money,
-  type Metal,
-  type PriceMode,
-} from "@/lib/gold";
+import { METALS, PRICE_MODES, formatUpdatedAt, money, type PriceMode } from "@/lib/gold";
 import type { PriceStatus } from "@/hooks/use-gold-prices";
 import { IconAlert, IconRefresh } from "./icons";
 import { Button, Skeleton } from "./ui";
@@ -18,14 +11,12 @@ export function SiteHeader({
   price,
   status,
   updatedAt,
-  metal,
   mode,
   onRefresh,
 }: {
   price: number | null;
   status: PriceStatus;
   updatedAt: string | null;
-  metal: Metal;
   mode: PriceMode;
   onRefresh: () => void;
 }) {
@@ -45,7 +36,7 @@ export function SiteHeader({
         <div className="order-last flex w-full min-w-0 items-center gap-3 border-t border-line pt-3 sm:order-none sm:w-auto sm:flex-1 sm:border-0 sm:pt-0">
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs text-fg-subtle">
-              {METALS[metal].short} · {PRICE_MODES[mode].label}
+              {METALS.bar.label} · {PRICE_MODES[mode].label}
             </p>
             <p aria-live="polite" className="truncate text-base font-semibold">
               {status === "loading" ? (

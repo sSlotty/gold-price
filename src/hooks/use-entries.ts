@@ -53,7 +53,7 @@ export function useEntries() {
   }, [undoState]);
 
   const update = useCallback(
-    (id: string, field: "date" | "amount", value: string) =>
+    (id: string, field: "date" | "amount" | "metal", value: string) =>
       commit(
         entries.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
       ),
@@ -61,7 +61,12 @@ export function useEntries() {
   );
 
   const add = useCallback(
-    () => commit([...entries, newEntry()]),
+    () =>
+      commit([
+        ...entries,
+        // Inherit the last row's type: portfolios tend to come in runs.
+        newEntry("", "", entries.at(-1)?.metal ?? "bar"),
+      ]),
     [commit, entries],
   );
 
