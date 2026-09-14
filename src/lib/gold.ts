@@ -110,6 +110,36 @@ export const parseLooseDate = (value: string): string => {
   return isValidIsoDate(iso) ? iso : "";
 };
 
+/* ── Plain-text entry lines ─────────────────────────────────────────────────
+   One shared definition of the `date : amount` line, used by both the import
+   parser and the export writer so a round trip is lossless by construction. */
+
+/**
+ * Splits one pasted line into its date and amount halves.
+ *
+ * An explicit delimiter wins, and only the *first* one counts — a later comma
+ * is a thousands separator inside the amount, not a separator. Falling back to
+ * whitespace keeps `21/01/2569 91558.15` working.
+ */
+export const splitEntryLine = (line: string): [string, string] => {
+  const text = line.trim();
+  const explicit = text.match(/^(.*?)\s*[:;\t,]\s*(.*)$/);
+  if (explicit) return [explicit[1], explicit[2]];
+  const spaced = text.match(/^(.*?)\s+(.*)$/);
+  return spaced ? [spaced[1], spaced[2]] : [text, ""];
+};
+
+/** The canonical export line: `21/01/2569 : 91558.15`. */
+export const toEntryLine = (entry: Entry) =>
+  `${toThaiDate(entry.date)} : ${entry.amount.replaceAll(",", "").trim()}`;
+
+/** True when an entry carries enough to survive a round trip through text. */
+export const isExportable = (entry: Entry) =>
+  isValidIsoDate(entry.date) && parseAmount(entry.amount) > 0;
+
+export const toEntriesText = (entries: Entry[]) =>
+  entries.filter(isExportable).map(toEntryLine).join("\n");
+
 export const formatUpdatedAt = (value: string | null) =>
   value
     ? new Intl.DateTimeFormat("th-TH-u-nu-latn", {

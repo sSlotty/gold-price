@@ -15,6 +15,7 @@ import { useEntries } from "@/hooks/use-entries";
 import { useGoldPrices } from "@/hooks/use-gold-prices";
 import { Breakdown } from "./breakdown";
 import { EntryEditor } from "./entry-editor";
+import { ExportDialog } from "./export-dialog";
 import { IconDownload, IconPaste, IconPrint, IconTrash } from "./icons";
 import { ImportDialog } from "./import-dialog";
 import { PortfolioSummary } from "./portfolio-summary";
@@ -41,6 +42,7 @@ export function GoldCalculator() {
   const [feePercent, setFeePercent] = useState("0");
   const [makingFee, setMakingFee] = useState("0");
   const [importOpen, setImportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [printedAt, setPrintedAt] = useState<string | null>(null);
 
   // `beforeprint` covers the toolbar button and ⌘P alike. flushSync guarantees
@@ -123,6 +125,14 @@ export function GoldCalculator() {
                 <Button size="sm" onClick={() => setImportOpen(true)}>
                   <IconPaste />
                   นำเข้า
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setExportOpen(true)}
+                  disabled={entries.length === 0}
+                >
+                  <IconDownload />
+                  ส่งออก
                 </Button>
                 <Button
                   size="sm"
@@ -223,7 +233,7 @@ export function GoldCalculator() {
             <PortfolioSummary totals={totals} metal={metal} status={status} />
 
             <Card className="px-5 py-4">
-              <Eyebrow>ส่งออก</Eyebrow>
+              <Eyebrow>รายงาน</Eyebrow>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button onClick={exportCsv} disabled={rows.length === 0}>
                   <IconDownload />
@@ -264,6 +274,11 @@ export function GoldCalculator() {
         open={importOpen}
         onClose={() => setImportOpen(false)}
         onImport={replace}
+      />
+      <ExportDialog
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        entries={entries}
       />
       <UndoToast
         label={undoLabel}

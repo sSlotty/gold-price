@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { newEntry, parseAmount, parseLooseDate, toThaiDate, type Entry } from "@/lib/gold";
+import {
+  newEntry,
+  parseAmount,
+  parseLooseDate,
+  splitEntryLine,
+  toThaiDate,
+  type Entry,
+} from "@/lib/gold";
 import { IconClose } from "./icons";
 import { Button, inputClass } from "./ui";
 
@@ -18,9 +25,9 @@ const parseText = (text: string): Parsed => {
     .map((line) => line.trim())
     .filter(Boolean)
     .flatMap((line): Entry[] => {
-      const [rawDate, rawAmount] = line.split(/[:\t,;]|\s{2,}/);
-      const date = parseLooseDate(rawDate ?? "");
-      const amount = (rawAmount ?? "").replaceAll(",", "").trim();
+      const [rawDate, rawAmount] = splitEntryLine(line);
+      const date = parseLooseDate(rawDate);
+      const amount = rawAmount.replaceAll(",", "").trim();
       if (!date || parseAmount(amount) <= 0) {
         skipped += 1;
         return [];

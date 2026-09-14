@@ -14,8 +14,9 @@ Everything runs client-side. Entries live in `localStorage` and never leave the 
 - **Buddhist-era dates** — native date picker, capped at today, with the พ.ศ. equivalent shown inline
 - **Three metal types** — ทองแท่ง 96.5%, ทองรูปพรรณ 96.5%, ทองคำ 99.99% (purity-adjusted)
 - **Fees** — an optional percentage of principal plus a flat ค่ากำเหน็จ per entry
-- **Export** — CSV (Excel-safe, BOM-prefixed) and a purpose-built A4 print/PDF report
+- **Export the report** — CSV (Excel-safe, BOM-prefixed) and a purpose-built A4 print/PDF report
 - **Bulk import** — paste `date : amount` lines, with a live preview of what parsed
+- **Export your entries** — copy or download the same `date : amount` text, so a backup round-trips straight back through import
 - **Light / dark / system** themes, applied before first paint
 - **Undo** on delete and clear-all
 
