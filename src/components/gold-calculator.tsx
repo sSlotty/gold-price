@@ -53,9 +53,9 @@ export function GoldCalculator() {
   const [exportOpen, setExportOpen] = useState(false);
   const [printedAt, setPrintedAt] = useState<string | null>(null);
 
-  // A per-viewer view preference, so the choice survives a reload. Only the
-  // small-screen layout honours it — on wide screens the summary already sits
-  // beside the list, so there is nothing to collapse for.
+  // A per-viewer view preference, so the choice survives a reload. It applies
+  // at every width: folding the list away on a wide screen leaves the summary
+  // and the breakdown table with the room instead.
   const entriesPanelId = useId();
   const collapsed = useLocalValue(COLLAPSE_KEY) === "1";
   const toggleEntries = () => writeLocal(COLLAPSE_KEY, collapsed ? "0" : "1");
@@ -125,7 +125,13 @@ export function GoldCalculator() {
           </p>
         </div>
 
-        <div className="screen-only grid items-start gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        {/* Collapsed, the list is a one-line strip, so the two-column split
+            would leave a tall void beside it — stack instead. */}
+        <div
+          className={`screen-only grid items-start gap-5 ${
+            collapsed ? "" : "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]"
+          }`}
+        >
           <Card className="overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
               <div>
@@ -137,7 +143,6 @@ export function GoldCalculator() {
               <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
-                  className="lg:hidden"
                   onClick={toggleEntries}
                   aria-expanded={!collapsed}
                   aria-controls={entriesPanelId}
@@ -170,7 +175,7 @@ export function GoldCalculator() {
             </div>
 
             {collapsed ? (
-              <p className="border-b border-line px-5 py-3 text-sm text-fg-muted lg:hidden">
+              <p className="border-b border-line px-5 py-3 text-sm text-fg-muted">
                 ซ่อนอยู่ · {entries.length} รายการ · เงินต้น{" "}
                 <span className="nums-tabular">{money(totals.principal)}</span>
               </p>
@@ -178,7 +183,7 @@ export function GoldCalculator() {
 
             <div
               id={entriesPanelId}
-              className={`space-y-5 px-5 py-5 ${collapsed ? "hidden lg:block" : ""}`}
+              className={`space-y-5 px-5 py-5 ${collapsed ? "hidden" : ""}`}
             >
               <div>
                 <SegmentedControl
