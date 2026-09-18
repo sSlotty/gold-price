@@ -217,6 +217,21 @@ export const isExportable = (entry: Entry) =>
 export const toEntriesText = (entries: Entry[]) =>
   entries.filter(isExportable).map(toEntryLine).join("\n");
 
+/** `"21012569"` / `"21/1/69"` → `"21/01/2569"`, formatting as digits arrive. */
+export const maskThaiDate = (raw: string) => {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)]
+    .filter(Boolean)
+    .join("/");
+};
+
+/** `2026-01-21` → `21/01/2026`, the Gregorian reading of a stored date. */
+export const toGregorianDate = (iso: string) => {
+  if (!isValidIsoDate(iso)) return "—";
+  const [year, month, day] = iso.split("-");
+  return `${day}/${month}/${year}`;
+};
+
 export const formatUpdatedAt = (value: string | null) =>
   value
     ? new Intl.DateTimeFormat("th-TH-u-nu-latn", {

@@ -1,14 +1,16 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import {
   METALS,
   METAL_KEYS,
   entryIssue,
+  maskThaiDate,
   money,
   parseAmount,
+  parseLooseDate,
+  toGregorianDate,
   toThaiDate,
-  todayIso,
   type Entry,
   type Row,
 } from "@/lib/gold";
@@ -16,9 +18,92 @@ import { IconPlus, IconTrash } from "./icons";
 import { Button, Select, inputClass } from "./ui";
 
 const ISSUE_MESSAGE = {
-  date: "เลือกวันที่ที่ไม่เกินวันนี้",
+  date: "วันที่ต้องไม่เกินวันนี้",
   amount: "จำนวนเงินต้องมากกว่า 0",
 } as const;
+
+/**
+ * A plain text field rather than `input[type=date]`.
+ *
+ * The native control renders in the device's locale — on a Thai iPhone that is
+ * "21 Jan BE 2569" — and its format cannot be set from CSS or markup. Typing
+ * digits into a masked text field gives the same dd/MM/yyyy everywhere, and
+ * sidesteps the locale-driven intrinsic width that made the native control
+ * outgrow the amount field beside it. The trade-off is the loss of the
+ * platform date picker.
+ */
+function DateField({
+  id,
+  entry,
+  invalid,
+  onCommit,
+}: {
+  id: string;
+  entry: Entry;
+  invalid: boolean;
+  onCommit: (iso: string) => void;
+}) {
+  const display = entry.date ? toThaiDate(entry.date) : "";
+  const [draft, setDraft] = useState(display);
+  // The last value this field itself wrote. Re-syncing the draft from the
+  // entry on every change would fight the typist: half of "26012569" is
+  // "26/01/25", a valid two-digit year, and committing it mid-keystroke
+  // rewrote the box to "26/01/2525". Only an outside change — an import, an
+  // undo — should replace what is being typed.
+  const [ours, setOurs] = useState(entry.date);
+
+  if (entry.date !== ours) {
+    setOurs(entry.date);
+    setDraft(display);
+  }
+
+  const complete = /^\d{2}\/\d{2}\/\d{4}$/.test(draft);
+  const unparseable = complete && !parseLooseDate(draft);
+
+  return (
+    <>
+      <input
+        id={id}
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="วว/ดด/ปปปป"
+        value={draft}
+        onChange={(event) => {
+          const masked = maskThaiDate(event.target.value);
+          setDraft(masked);
+          if (masked === "") {
+            setOurs("");
+            onCommit("");
+            return;
+          }
+          // Wait for the whole dd/MM/yyyy before writing anything, so partial
+          // input never lands in storage or moves the totals.
+          if (!/^\d{2}\/\d{2}\/\d{4}$/.test(masked)) return;
+          const iso = parseLooseDate(masked);
+          if (!iso) return;
+          setOurs(iso);
+          onCommit(iso);
+        }}
+        onBlur={() => setDraft(entry.date ? toThaiDate(entry.date) : draft)}
+        aria-invalid={invalid || unparseable}
+        aria-describedby={`${id}-note`}
+        className={`${inputClass} nums-tabular`}
+      />
+      <p id={`${id}-note`} className="text-xs text-fg-subtle">
+        {invalid ? (
+          <span className="text-neg">{ISSUE_MESSAGE.date}</span>
+        ) : unparseable ? (
+          <span className="text-neg">รูปแบบต้องเป็น วว/ดด/ปปปป</span>
+        ) : entry.date ? (
+          <>ค.ศ. {toGregorianDate(entry.date)}</>
+        ) : (
+          "พ.ศ. เช่น 21/01/2569"
+        )}
+      </p>
+    </>
+  );
+}
 
 function EntryRow({
   entry,
@@ -57,30 +142,17 @@ function EntryRow({
         </Button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           <label htmlFor={dateId} className="text-xs font-medium text-fg-muted">
             วันที่ซื้อ
           </label>
-          <input
+          <DateField
             id={dateId}
-            type="date"
-            max={todayIso()}
-            value={entry.date}
-            onChange={(event) => onUpdate(entry.id, "date", event.target.value)}
-            aria-invalid={issue === "date"}
-            aria-describedby={`${dateId}-note`}
-            className={`${inputClass} nums-tabular`}
+            entry={entry}
+            invalid={issue === "date"}
+            onCommit={(iso) => onUpdate(entry.id, "date", iso)}
           />
-          <p id={`${dateId}-note`} className="text-xs text-fg-subtle">
-            {issue === "date" ? (
-              <span className="text-neg">{ISSUE_MESSAGE.date}</span>
-            ) : entry.date ? (
-              <>พ.ศ. {toThaiDate(entry.date)}</>
-            ) : (
-              "ยังไม่ได้เลือกวันที่"
-            )}
-          </p>
         </div>
 
         <div className="flex min-w-0 flex-col gap-1">
