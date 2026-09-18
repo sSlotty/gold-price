@@ -182,6 +182,34 @@
     color: var(--accent);
   }
 
+  /*
+   * iOS Safari sizes `input[type=date]` from the locale's format string rather
+   * than the declared width, and the Thai Buddhist calendar renders long
+   * ("21 Jan BE 2569"). That intrinsic width made the field wider than the
+   * amount input beside it and pushed it past the card edge. Clamping the
+   * control and its inner value element lets the declared width win, so the
+   * two fields match.
+   */
+  input[type="date"] {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  input[type="date"]::-webkit-date-and-time-value {
+    min-width: 0;
+    margin: 0;
+    text-align: start;
+  }
+
+  /* iOS only — `appearance: none` would drop Chrome's calendar button. */
+  @supports (-webkit-touch-callout: none) {
+    input[type="date"] {
+      -webkit-appearance: none;
+      appearance: none;
+      display: block;
+    }
+  }
+
   /* Native controls follow the theme instead of forcing a light widget. */
   input,
   select,

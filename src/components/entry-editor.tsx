@@ -58,7 +58,7 @@ function EntryRow({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <label htmlFor={dateId} className="text-xs font-medium text-fg-muted">
             วันที่ซื้อ
           </label>
@@ -83,7 +83,7 @@ function EntryRow({
           </p>
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <label htmlFor={amountId} className="text-xs font-medium text-fg-muted">
             จำนวนเงินที่ซื้อ (บาท)
           </label>
@@ -121,7 +121,7 @@ function EntryRow({
         </div>
       </div>
 
-      <div className="mt-3 flex flex-col gap-1">
+      <div className="mt-3 flex min-w-0 flex-col gap-1">
         <label htmlFor={metalId} className="text-xs font-medium text-fg-muted">
           ประเภททอง
         </label>
