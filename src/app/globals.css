@@ -139,12 +139,15 @@
     font-size: 0.9375rem;
   }
 
-  /* The sticky header covers whatever the browser scrolls to — tapping a field
-     on mobile, tabbing through the form, following the skip link. Without a
-     scroll margin the target lands underneath it. The offset clears the header
-     plus the field's own label; the header is two rows below `sm`, one above. */
+  /* A sticky header covers whatever the browser scrolls to — tabbing through
+     the form, following the skip link. The offset clears the header plus the
+     field's own label.
+     Below `sm` the header does not stick at all: it is two rows tall there,
+     and iOS runs its own scroll when the date picker opens without honouring
+     scroll-margin, so a focused field could land underneath it. A header that
+     scrolls away cannot cover anything, and the phone gets the space back. */
   :root {
-    --header-offset: 10.5rem;
+    --header-offset: 1.5rem;
   }
 
   @media (min-width: 640px) {
@@ -203,6 +206,20 @@
 }
 
 @layer utilities {
+  /*
+   * The sticky header paints the same wash as the page, anchored the same way.
+   * Both are `background-attachment: fixed`, so the header's slice lines up
+   * exactly with what the body would have painted there — it reads as part of
+   * the page while staying fully opaque, so scrolled content cannot show
+   * through. A translucent tint plus backdrop-blur did not hold up: Safari
+   * dropped the blur and the toolbar beneath stayed legible through it.
+   */
+  .app-surface {
+    background: var(--bg-wash), var(--bg);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+
   /* Columns of figures must align; standalone display numbers must not. */
   .nums-tabular {
     font-variant-numeric: tabular-nums;

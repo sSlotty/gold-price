@@ -21,7 +21,7 @@ export function SiteHeader({
   onRefresh: () => void;
 }) {
   return (
-    <header className="screen-only sticky top-0 z-30 border-b border-line bg-bg/85 backdrop-blur-md">
+    <header className="screen-only app-surface z-30 border-b border-line sm:sticky sm:top-0">
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 sm:px-6">
         <a
           href="#main"
