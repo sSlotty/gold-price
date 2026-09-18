@@ -113,6 +113,22 @@ export const IconClose = svg(
   </>,
 );
 
+export const IconEye = svg(
+  <>
+    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z" />
+    <circle cx="12" cy="12" r="3" />
+  </>,
+);
+
+export const IconEyeOff = svg(
+  <>
+    <path d="M10.6 6.2A9.9 9.9 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3 3.6" />
+    <path d="M6.5 7.6A16.8 16.8 0 0 0 2 12s3.6 6 10 6a9.7 9.7 0 0 0 4-.8" />
+    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+    <path d="M3 3l18 18" />
+  </>,
+);
+
 export const IconChevronDown = svg(<path d="m6 9 6 6 6-6" />);
 
 export const IconUndo = svg(

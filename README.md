@@ -19,6 +19,7 @@ Everything runs client-side. Entries live in `localStorage` and never leave the 
 - **Export your entries** — copy or download the same `date : amount` text, so a backup round-trips straight back through import
 - **Light / dark / system** themes, applied before first paint
 - **Undo** on delete and clear-all
+- **Collapse the entry list on small screens** so the portfolio summary is reachable without scrolling past every row
 
 ## Running it
 

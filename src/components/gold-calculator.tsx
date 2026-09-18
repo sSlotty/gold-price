@@ -1,21 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import {
+  COLLAPSE_KEY,
   PRICE_MODES,
   buildRows,
   buildTotals,
   metalPrice,
+  money,
   toCsv,
   type PriceMode,
 } from "@/lib/gold";
+import { useLocalValue, writeLocal } from "@/lib/local-store";
 import { useEntries } from "@/hooks/use-entries";
 import { useGoldPrices } from "@/hooks/use-gold-prices";
 import { Breakdown } from "./breakdown";
 import { EntryEditor } from "./entry-editor";
 import { ExportDialog } from "./export-dialog";
-import { IconDownload, IconPaste, IconPrint, IconTrash } from "./icons";
+import {
+  IconDownload,
+  IconEye,
+  IconEyeOff,
+  IconPaste,
+  IconPrint,
+  IconTrash,
+} from "./icons";
 import { ImportDialog } from "./import-dialog";
 import { PortfolioSummary } from "./portfolio-summary";
 import { PrintReport } from "./print-report";
@@ -42,6 +52,13 @@ export function GoldCalculator() {
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [printedAt, setPrintedAt] = useState<string | null>(null);
+
+  // A per-viewer view preference, so the choice survives a reload. Only the
+  // small-screen layout honours it — on wide screens the summary already sits
+  // beside the list, so there is nothing to collapse for.
+  const entriesPanelId = useId();
+  const collapsed = useLocalValue(COLLAPSE_KEY) === "1";
+  const toggleEntries = () => writeLocal(COLLAPSE_KEY, collapsed ? "0" : "1");
 
   // `beforeprint` covers the toolbar button and ⌘P alike. flushSync guarantees
   // the stamp is in the DOM before the print dialog snapshots the page, and
@@ -117,7 +134,17 @@ export function GoldCalculator() {
                   รายการซื้อทองของคุณ
                 </h2>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  className="lg:hidden"
+                  onClick={toggleEntries}
+                  aria-expanded={!collapsed}
+                  aria-controls={entriesPanelId}
+                >
+                  {collapsed ? <IconEye /> : <IconEyeOff />}
+                  {collapsed ? "แสดงรายการ" : "ซ่อนรายการ"}
+                </Button>
                 <Button size="sm" onClick={() => setImportOpen(true)}>
                   <IconPaste />
                   นำเข้า
@@ -142,7 +169,17 @@ export function GoldCalculator() {
               </div>
             </div>
 
-            <div className="space-y-5 px-5 py-5">
+            {collapsed ? (
+              <p className="border-b border-line px-5 py-3 text-sm text-fg-muted lg:hidden">
+                ซ่อนอยู่ · {entries.length} รายการ · เงินต้น{" "}
+                <span className="nums-tabular">{money(totals.principal)}</span>
+              </p>
+            ) : null}
+
+            <div
+              id={entriesPanelId}
+              className={`space-y-5 px-5 py-5 ${collapsed ? "hidden lg:block" : ""}`}
+            >
               <div>
                 <SegmentedControl
                   name="mode"

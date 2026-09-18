@@ -87,6 +87,8 @@ export const PRICE_MODES: Record<PriceMode, { label: string; hint: string }> = {
 export const BANGKOK = "Asia/Bangkok";
 export const STORAGE_KEY = "aurum.entries.v2";
 export const LEGACY_STORAGE_KEY = "aurum-entries";
+/** Per-viewer view preference: is the entry list collapsed on small screens? */
+export const COLLAPSE_KEY = "aurum.entries.collapsed";
 
 /* ── Formatting ─────────────────────────────────────────────────────────── */
 
